@@ -22,13 +22,17 @@ REG_DISPLAY_TEST=0X0F
 
 class MaxMatrix(shift_register.Shift_register):
 
-    def __init__(self, dio_pin_id = 13, clk_pin_id = 14, stb_pin_id = 15, lsbfirst = False,
+    def __init__(self, 
+                 dio_pin_id = 13, clk_pin_id = 14, stb_pin_id = 15, lsbfirst = False,
                  intensity = 0x01,
-                 matrix_count = 2, columns_per_matrix = 8, dots_per_column = 8):
+                 matrix_count_row = 1, matrix_count_column = 2, 
+                 columns_per_matrix = 8, dots_per_column = 8):
                  
         super().__init__(dio_pin_id, clk_pin_id, stb_pin_id, lsbfirst)
         self.intensity = intensity
-        self.matrix_count = matrix_count
+        self.matrix_count_row = matrix_count_row
+        self.matrix_count_column = matrix_count_column
+        self.matrix_count = matrix_count_row * matrix_count_column 
         self.columns_per_matrix = columns_per_matrix
         self.dots_per_column = dots_per_column
         self.buffer_length = self.matrix_count * self.columns_per_matrix
@@ -75,13 +79,20 @@ class MaxMatrix(shift_register.Shift_register):
         self.latch()    
         
 
-    def clear(self):
+    def clear(self, value = CLEAR_VALUE):
         for i in range(self.columns_per_matrix):
-            self.setColumnAll(i, CLEAR_VALUE)
+            self.setColumnAll(i, value)
             
         for i in range(self.buffer_length):
-            self.buffer[i] = CLEAR_VALUE 
-
+            self.buffer[i] = value 
+            
+            
+    def fill(self, value = 0xFF): 
+        for i in range(self.buffer_length):
+            self.buffer[i] = value
+            
+        self.reload()
+            
 
     def setColumn(self, col, value):        
         targeted_matrix = int(col / self.columns_per_matrix)
